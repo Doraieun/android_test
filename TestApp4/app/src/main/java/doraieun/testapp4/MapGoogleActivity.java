@@ -1,19 +1,32 @@
 package doraieun.testapp4;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Adapter;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.zip.Inflater;
 
 public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -21,6 +34,8 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
     private Marker marker;
     private LocationManager locationManager;
     private double x, y;
+
+    private LatLng longClicklatLng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +47,6 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
         mapFragment.getMapAsync(this);//onMapReady를 callback으로 사용
 
         System.out.println("############### mapFragment.getMap() : " + mapFragment.getMap().toString());
-
     }
 
 
@@ -46,8 +60,43 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
      * installed Google Play services and returned to the app.
      */
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
+
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                longClicklatLng = latLng;
+                System.out.println("################ MapLongClickListener");
+
+                //
+                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                final LinearLayout linearLayout = (LinearLayout)inflater.inflate(R.layout.text_input, null);
+                //TextView textView = (TextView) linearLayout.findViewById(R.id.locName);
+
+                //getApplicationContext()사용시 error, Activity명.this 사용시 정상
+                AlertDialog.Builder inputLocName = new AlertDialog.Builder(MapGoogleActivity.this);
+                inputLocName.setTitle("input location name");
+                inputLocName.setView(linearLayout);
+                inputLocName.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        EditText editText = (EditText) linearLayout.findViewById(R.id.locName);
+                        System.out.println("############# editText.getText() : " + editText.getText());
+
+                        marker = mMap.addMarker(new MarkerOptions().position(longClicklatLng).title(editText.getText().toString()));
+                    }
+                });
+
+                inputLocName.show();
+
+
+
+                // 키보드 띄우기
+                //InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                //mgr.showSoftInput(cy_id, InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
 
         System.out.println("############### googleMap : " + googleMap.toString());
 
@@ -61,6 +110,8 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
 
         mMap.setMyLocationEnabled(true);
+        UiSettings uiSettings = mMap.getUiSettings();
+        uiSettings.setAllGesturesEnabled(true);
 
         locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 
