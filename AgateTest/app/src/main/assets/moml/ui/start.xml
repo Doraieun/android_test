@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MOML>
+    <UILAYOUT portrait="320,460" landscape="320,460">
+        <LABEL text="Hello MOML!" />
+    </UILAYOUT>
+</MOML>
