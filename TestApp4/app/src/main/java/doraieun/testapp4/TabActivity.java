@@ -274,4 +274,5 @@ public class TabActivity extends AppCompatActivity {
             }
         };
     }
+
 }
