@@ -3,9 +3,14 @@ package doraieun.testapp4;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
+import android.os.StrictMode;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
@@ -13,19 +18,45 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Adapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResolvingResultCallbacks;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.AddPlaceRequest;
+import com.google.android.gms.location.places.AutocompleteFilter;
+import com.google.android.gms.location.places.AutocompletePredictionBuffer;
+import com.google.android.gms.location.places.GeoDataApi;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.PlaceBuffer;
+import com.google.android.gms.location.places.PlacePhotoMetadataResult;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.zip.Inflater;
 
 public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -36,6 +67,8 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
     private double x, y;
 
     private LatLng longClicklatLng;
+
+    private HashMap<String, String> placeIdMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +131,13 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
             }
         });
 
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+
+            }
+        });
+
         System.out.println("############### googleMap : " + googleMap.toString());
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -109,9 +149,18 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
         //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
 
-        mMap.setMyLocationEnabled(true);
+        //mMap.setMyLocationEnabled(true);
         UiSettings uiSettings = mMap.getUiSettings();
         uiSettings.setAllGesturesEnabled(true);
+        uiSettings.setCompassEnabled(true);
+        uiSettings.setIndoorLevelPickerEnabled(true);
+        uiSettings.setMapToolbarEnabled(true);
+        uiSettings.setMyLocationButtonEnabled(true);
+        uiSettings.setRotateGesturesEnabled(true);
+        uiSettings.setScrollGesturesEnabled(true);
+        uiSettings.setTiltGesturesEnabled(true);
+        uiSettings.setZoomControlsEnabled(true);
+        uiSettings.setZoomGesturesEnabled(true);
 
         locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 
@@ -132,6 +181,21 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
         //System.out.println("init location.getLongitude() : " + location.getLongitude());
 
         mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker in MyLocation"));
+        mMap.setOnMarkerClickListener(onMarkerClickListener);
+
+
+
+
+        Button searchButton = (Button)findViewById(R.id.button5);
+        searchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println("############# SearchButton onClick!");
+                callThread();
+
+            }
+        });
+
 
     }
 
@@ -154,6 +218,91 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
             mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));//Map이동
             mMap.animateCamera(CameraUpdateFactory.zoomTo(13));//줌인
 
+
+
+            // 주위 정보 조회
+            // android.os.NetworkOnMainThreadException, illegalException:not on the main thread url
+            //  ==> 메인 Method에서는 UI 관련 작업등 필수 요소만 담당하고, 네트워크 작업등 지연요소가 있는 행위를
+            // 메인 스레드에서 할 수 없도록 제한이 추가됨(android 3.0 이후)
+            // 발생시 처리방법
+            // 1. AsyncTask를 이용한 별도 thread로 처리
+            // 2. 아래 구문 추가
+//            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+//            StrictMode.setThreadPolicy(policy);
+//
+//            try{
+//
+//                System.out.println("############################ x : " + x);
+//                System.out.println("############################ y : " + y);
+//
+//                StringBuilder responseBuilder = new StringBuilder();
+//                String searchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + x + "," + y + "&radius=10000&types=" + URLEncoder.encode("커피", "UTF-8") + "&name=&key=AIzaSyDN1QX-gWUR-mIYo_D21PNFLHHpNQkIkGU";
+//                System.out.println("######## searchUrl : " + searchUrl);
+//                //URL url = new URL("http://ajax.googleapis.com/ajax/services/search/local?v=1.0&q="+ URLEncoder.encode("커피", "UTF-8")+"&sll="+ x + "," + y + "&hl=kr");
+//                URL url = new URL(searchUrl);
+//                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(url.openStream()));
+//                String inputLine;
+//                while((inputLine = bufferedReader.readLine()) != null){
+//                    responseBuilder.append(inputLine);
+//                }
+//                bufferedReader.close();
+//
+//                System.out.println("############################");
+//                System.out.println(responseBuilder.toString());
+//                System.out.println("############################");
+//
+//                //Marker
+//                JSONObject searchResultObject = new JSONObject(responseBuilder.toString());
+//                JSONArray searchResultList = searchResultObject.getJSONArray("results");
+//                for(int i = 0; i < searchResultList.length(); i++){
+//                    JSONObject searchResult = (JSONObject) searchResultList.get(i);
+//                    String storeName = (String)searchResult.get("name");
+//                    String storeAdr = (String)searchResult.get("vicinity");
+//                    String storeIco = (String)searchResult.get("icon");
+//                    //System.out.println("############ Store Name : " + storeName);
+//                    //System.out.println("############ Store Name : " + storeAdr);
+//
+//                    JSONObject geoMetryObject = (JSONObject) searchResult.getJSONObject("geometry");
+//                    JSONObject locationObject = (JSONObject) geoMetryObject.getJSONObject("location");
+//                    //System.out.println("########### lat : " + locationObject.get("lat"));
+//                    //System.out.println("########### lng : " + locationObject.get("lng"));
+//
+//                    Double aroundLat = (Double)locationObject.get("lat");
+//                    Double aroundLng = (Double)locationObject.get("lng");
+//
+//                    LatLng aroundLoc = new LatLng(aroundLat, aroundLng);
+//                    MarkerOptions markerOptions= new MarkerOptions();
+//                    markerOptions.position(aroundLoc);
+//                    markerOptions.title(storeName);
+//                    markerOptions.snippet(storeAdr);
+//
+//                    URL icoUrl = new URL(storeIco);
+//                    Bitmap icoBmp = BitmapFactory.decodeStream(icoUrl.openConnection().getInputStream());
+//                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icoBmp));
+//
+//                    marker = mMap.addMarker(new MarkerOptions().position(aroundLoc).title(storeName));
+//
+//                    /*
+//                    for(int j = 0; j < locationList.length(); j++){
+//                        String locationResult = (String) locationList.get(i);
+//                        System.out.println("################### locationResult : " + locationResult);
+//                    }
+//*/
+//                }
+//
+//
+//
+//
+//                //System.out.println("jsonArray.length() : " + jsonObject.length());
+//                //System.out.println("jsonObject.getJSONArray(\"results\") : " + jsonObject.getJSONArray("results"));
+//                //System.out.println("jsonObject.getJSONArray(\"results\").length() : " + jsonObject.getJSONArray("results").length());
+//
+//
+//            }catch (Exception e){
+//                System.out.println("##### 주위정보조회 fail");
+//                System.out.println("##### " + e.toString());
+//            }
+
         }
 
         @Override
@@ -171,4 +320,157 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
 
         }
     };
+
+    GoogleMap.OnMarkerClickListener onMarkerClickListener = new GoogleMap.OnMarkerClickListener() {
+        @Override
+        public boolean onMarkerClick(Marker marker) {
+            System.out.println("############## onMarkerClick!!!!");
+
+            System.out.println("############## marker.getTitle() : " + marker.getTitle());
+            System.out.println("############## marker.getSnippet() : " + marker.getSnippet());
+            System.out.println("############## marker.getPosition().latitude : " + marker.getPosition().latitude);
+            System.out.println("############## marker.getPosition().longitude : " + marker.getPosition().longitude);
+
+            String mapKey = String.valueOf(marker.getPosition().latitude) + "," + String.valueOf(marker.getPosition().longitude);
+            String placeId = placeIdMap.get(mapKey);
+
+            GoogleApiClient.Builder googleApiClientBuilder = new GoogleApiClient.Builder(MapGoogleActivity.this);
+            googleApiClientBuilder.addApi(Places.GEO_DATA_API);
+            googleApiClientBuilder.addApi(Places.PLACE_DETECTION_API);
+            googleApiClientBuilder.addApi(LocationServices.API);
+
+            GoogleApiClient googleApiClient = googleApiClientBuilder.build();
+            googleApiClient.connect();
+
+            PendingResult<PlaceBuffer> pendingResult = Places.GeoDataApi.getPlaceById(googleApiClient, placeId);
+            pendingResult.setResultCallback(new ResultCallback<PlaceBuffer>() {
+                @Override
+                public void onResult(PlaceBuffer places) {
+                    System.out.println("############## getPlaceById Callback : " + places);
+                    System.out.println("############## places.getStatus() : " + places.getStatus());
+                }
+            });
+
+
+
+            TextView textName = (TextView)findViewById(R.id.textName);
+            TextView textLat = (TextView)findViewById(R.id.textLat);
+            TextView textLng = (TextView)findViewById(R.id.textLng);
+            textName.setText(marker.getTitle());
+            textLat.setText(String.valueOf(marker.getPosition().latitude));
+            textLng.setText(String.valueOf(marker.getPosition().longitude));
+
+            return true;
+        }
+    };
+
+
+    private void callThread(){
+
+        try{
+
+            if(marker != null) marker.remove();
+
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+
+            System.out.println("############################ x : " + x);
+            System.out.println("############################ y : " + y);
+
+            TextView searchTextView = (TextView)findViewById(R.id.editText);
+            CharSequence charSequence = searchTextView.getText();
+            String searchWord = charSequence.toString();
+
+            System.out.println("###################### searchWord : " + searchWord);
+
+            StringBuilder responseBuilder = new StringBuilder();
+            String searchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + x + "," + y + "&radius=10000&types=&name=" + URLEncoder.encode(searchWord, "UTF-8") + "&key=AIzaSyDN1QX-gWUR-mIYo_D21PNFLHHpNQkIkGU";
+            System.out.println("######## searchUrl : " + searchUrl);
+            //URL url = new URL("http://ajax.googleapis.com/ajax/services/search/local?v=1.0&q="+ URLEncoder.encode("커피", "UTF-8")+"&sll="+ x + "," + y + "&hl=kr");
+            URL url = new URL(searchUrl);
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(url.openStream()));
+            String inputLine;
+            while((inputLine = bufferedReader.readLine()) != null){
+                responseBuilder.append(inputLine);
+            }
+            bufferedReader.close();
+
+            System.out.println("############################");
+            System.out.println(responseBuilder.toString());
+            System.out.println("############################");
+
+            //Marker
+            JSONObject searchResultObject = new JSONObject(responseBuilder.toString());
+            JSONArray searchResultList = searchResultObject.getJSONArray("results");
+            for(int i = 0; i < searchResultList.length(); i++){
+                JSONObject searchResult = (JSONObject) searchResultList.get(i);
+                String storeName = (String)searchResult.get("name");
+                String storeAdr = (String)searchResult.get("vicinity");
+                String storeIco = (String)searchResult.get("icon");
+                //System.out.println("############ Store Name : " + storeName);
+                //System.out.println("############ Store Name : " + storeAdr);
+
+                JSONObject geoMetryObject = (JSONObject) searchResult.getJSONObject("geometry");
+                JSONObject locationObject = (JSONObject) geoMetryObject.getJSONObject("location");
+                //System.out.println("########### lat : " + locationObject.get("lat"));
+                //System.out.println("########### lng : " + locationObject.get("lng"));
+
+                Double aroundLat = (Double)locationObject.get("lat");
+                Double aroundLng = (Double)locationObject.get("lng");
+
+                LatLng aroundLoc = new LatLng(aroundLat, aroundLng);
+                MarkerOptions markerOptions= new MarkerOptions();
+                markerOptions.position(aroundLoc);
+                markerOptions.title(storeName);
+                markerOptions.snippet(storeAdr);
+
+
+                URL icoUrl = new URL(storeIco);
+                Bitmap icoBmp = BitmapFactory.decodeStream(icoUrl.openConnection().getInputStream());
+                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icoBmp));
+                marker = mMap.addMarker(new MarkerOptions().position(aroundLoc).title(storeName));
+
+                placeIdMap = new HashMap<String, String>();
+                String mapKey = String.valueOf(aroundLat) + "," + String.valueOf(aroundLng);
+                String mapValue = (String)searchResult.get("place_id");
+                placeIdMap.put(mapKey, mapValue);
+
+            }
+
+        }catch (Exception e){
+            System.out.println("##### 주위정보조회 fail");
+            System.out.println("##### " + e.toString());
+        }
+
+        //SearchThread searchThread = new SearchThread();
+        //searchThread.execute();
+
+//        Thread thread = new Thread(new Runnable(){
+//            @Override
+//            public void run() {
+//                try{
+//                    SearchThread searchThread = new SearchThread();
+//                    searchThread.execute();
+//
+//                }catch (Exception e){
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+//
+//        thread.run();
+
+    }
+
+
+    private class SearchThread extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+
+
+            return null;
+        }
+    }
+
 }
+
