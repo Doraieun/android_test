@@ -218,91 +218,6 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
             mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));//Map이동
             mMap.animateCamera(CameraUpdateFactory.zoomTo(13));//줌인
 
-
-
-            // 주위 정보 조회
-            // android.os.NetworkOnMainThreadException, illegalException:not on the main thread url
-            //  ==> 메인 Method에서는 UI 관련 작업등 필수 요소만 담당하고, 네트워크 작업등 지연요소가 있는 행위를
-            // 메인 스레드에서 할 수 없도록 제한이 추가됨(android 3.0 이후)
-            // 발생시 처리방법
-            // 1. AsyncTask를 이용한 별도 thread로 처리
-            // 2. 아래 구문 추가
-//            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-//            StrictMode.setThreadPolicy(policy);
-//
-//            try{
-//
-//                System.out.println("############################ x : " + x);
-//                System.out.println("############################ y : " + y);
-//
-//                StringBuilder responseBuilder = new StringBuilder();
-//                String searchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + x + "," + y + "&radius=10000&types=" + URLEncoder.encode("커피", "UTF-8") + "&name=&key=AIzaSyDN1QX-gWUR-mIYo_D21PNFLHHpNQkIkGU";
-//                System.out.println("######## searchUrl : " + searchUrl);
-//                //URL url = new URL("http://ajax.googleapis.com/ajax/services/search/local?v=1.0&q="+ URLEncoder.encode("커피", "UTF-8")+"&sll="+ x + "," + y + "&hl=kr");
-//                URL url = new URL(searchUrl);
-//                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(url.openStream()));
-//                String inputLine;
-//                while((inputLine = bufferedReader.readLine()) != null){
-//                    responseBuilder.append(inputLine);
-//                }
-//                bufferedReader.close();
-//
-//                System.out.println("############################");
-//                System.out.println(responseBuilder.toString());
-//                System.out.println("############################");
-//
-//                //Marker
-//                JSONObject searchResultObject = new JSONObject(responseBuilder.toString());
-//                JSONArray searchResultList = searchResultObject.getJSONArray("results");
-//                for(int i = 0; i < searchResultList.length(); i++){
-//                    JSONObject searchResult = (JSONObject) searchResultList.get(i);
-//                    String storeName = (String)searchResult.get("name");
-//                    String storeAdr = (String)searchResult.get("vicinity");
-//                    String storeIco = (String)searchResult.get("icon");
-//                    //System.out.println("############ Store Name : " + storeName);
-//                    //System.out.println("############ Store Name : " + storeAdr);
-//
-//                    JSONObject geoMetryObject = (JSONObject) searchResult.getJSONObject("geometry");
-//                    JSONObject locationObject = (JSONObject) geoMetryObject.getJSONObject("location");
-//                    //System.out.println("########### lat : " + locationObject.get("lat"));
-//                    //System.out.println("########### lng : " + locationObject.get("lng"));
-//
-//                    Double aroundLat = (Double)locationObject.get("lat");
-//                    Double aroundLng = (Double)locationObject.get("lng");
-//
-//                    LatLng aroundLoc = new LatLng(aroundLat, aroundLng);
-//                    MarkerOptions markerOptions= new MarkerOptions();
-//                    markerOptions.position(aroundLoc);
-//                    markerOptions.title(storeName);
-//                    markerOptions.snippet(storeAdr);
-//
-//                    URL icoUrl = new URL(storeIco);
-//                    Bitmap icoBmp = BitmapFactory.decodeStream(icoUrl.openConnection().getInputStream());
-//                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icoBmp));
-//
-//                    marker = mMap.addMarker(new MarkerOptions().position(aroundLoc).title(storeName));
-//
-//                    /*
-//                    for(int j = 0; j < locationList.length(); j++){
-//                        String locationResult = (String) locationList.get(i);
-//                        System.out.println("################### locationResult : " + locationResult);
-//                    }
-//*/
-//                }
-//
-//
-//
-//
-//                //System.out.println("jsonArray.length() : " + jsonObject.length());
-//                //System.out.println("jsonObject.getJSONArray(\"results\") : " + jsonObject.getJSONArray("results"));
-//                //System.out.println("jsonObject.getJSONArray(\"results\").length() : " + jsonObject.getJSONArray("results").length());
-//
-//
-//            }catch (Exception e){
-//                System.out.println("##### 주위정보조회 fail");
-//                System.out.println("##### " + e.toString());
-//            }
-
         }
 
         @Override
@@ -367,6 +282,15 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
 
     private void callThread(){
 
+        // 주위 정보 조회
+        // android.os.NetworkOnMainThreadException, illegalException:not on the main thread url
+        //  ==> 메인 Method에서는 UI 관련 작업등 필수 요소만 담당하고, 네트워크 작업등 지연요소가 있는 행위를
+        // 메인 스레드에서 할 수 없도록 제한이 추가됨(android 3.0 이후)
+        // 발생시 처리방법
+        // 1. AsyncTask를 이용한 별도 thread로 처리
+        // 2. 아래 구문 추가
+//            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+//            StrictMode.setThreadPolicy(policy);
         try{
 
             if(marker != null) marker.remove();
@@ -389,6 +313,45 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
             //URL url = new URL("http://ajax.googleapis.com/ajax/services/search/local?v=1.0&q="+ URLEncoder.encode("커피", "UTF-8")+"&sll="+ x + "," + y + "&hl=kr");
             URL url = new URL(searchUrl);
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(url.openStream()));
+            /*
+            {
+               "html_attributions" : [],
+               "next_page_token" : "CoQC-wAAAIL0Z1HYdB1WTT_cYSAhpdye2NSOsjfqwfMVxLIQcKsd69H6OdRa4dQpgPVRlIUlMcSOVElKlNsXkq53pCwyoXPpVRIxD2FFyuBboXTXR6gLCcUHs8k5v2v_2tnhYUe2j1nJkTQNUt1VfywQzwTZxSQ70hN7J8px5--ErBbq68xJx7dIGYDcqN6Kw99fJFpn_Mypdxw64c-TIdoiNa3eB9ZapfWcWu5BqCLIeeWg0kRqn6rQUbXTL3Jawf14QibjHNz5BcIpcW-_dIscYIZjsVutD2fUy6zP4FzXLlootxbYgfZQMtpzPS3TiwSWOF190Mi8zgyTqSHOJi0d9S6kx4ESEMGqZAlgSnWnfLdZzeKegUwaFKsp1QtNm693QIbmCLImOtSD1cGs",
+               "results" : [
+                  {
+                     "geometry" : {
+                        "location" : {
+                           "lat" : 35.1900447,
+                           "lng" : 128.605213
+                        }
+                     },
+                     "icon" : "https://maps.gstatic.com/mapfiles/place_api/icons/generic_business-71.png",
+                     "id" : "8dea01e4973f5e6b5228b4be09bcce08169a2e59",
+                     "name" : "두산",
+                     "place_id" : "ChIJtQ8_N5ktbzURHAFTgznLkPc",
+                     "reference" : "CmRaAAAAYi2D1aem7_pYg6yl5RowMRJ4_NEmn7_Okh9PQawCPetKHOAhBVuEEycYB0VPRJlnPUvyjR1dz34an9cMysvf-qBRfKoOEV0-jl_VKRfxLqzENxPncdFd43VlZ4ggDn3JEhA1Lw9vTscAwZ5lg7M59FRQGhQRGiySyTZaPCtIAGq_tB5HKLfhJg",
+                     "scope" : "GOOGLE",
+                     "types" : [ "establishment" ],
+                     "vicinity" : "창원시 성산구"
+                  },
+                  {
+                     "geometry" : {
+                        "location" : {
+                           "lat" : 35.1797958,
+                           "lng" : 128.6031301
+                        }
+                     },
+                     "icon" : "https://maps.gstatic.com/mapfiles/place_api/icons/generic_business-71.png",
+                     "id" : "1d692540c80d833155fedef625029ec98d352b0e",
+                     "name" : "두산중공업",
+                     "place_id" : "ChIJ-9FyLQgtbzUR5Aq2iBOGe4c",
+                     "reference" : "CnRjAAAAi8E3Vj4RY-J10E5iFGW4fATYXOwmOc7h8y-MJnwz4M0pRmMRczCFi7Mjk2_SM7lJvR7506GNzM7X6cIYE85mkWq48XV-tixoECX7Sjt6S5jBFFUe2hdxCN5SxdCq04B7UsQUu2-uqbIvEEEcwefwWxIQpMGOfRbY6GE1VFMvgEdYAxoU3BZCOzR0Y-ayCZfkR4N-1yhyFnk",
+                     "scope" : "GOOGLE",
+                     "types" : [ "point_of_interest", "establishment" ],
+                     "vicinity" : "창원시 성산구 두산볼보로 22"
+                  }
+             }
+             */
             String inputLine;
             while((inputLine = bufferedReader.readLine()) != null){
                 responseBuilder.append(inputLine);
