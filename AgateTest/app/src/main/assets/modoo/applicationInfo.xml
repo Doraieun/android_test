@@ -4,5 +4,6 @@
 		<START url="webview.xml" />
 		<ORIENTATION type="defaultPortrait" />
 	</APPLICATIONINFO>
+	
 </MOML>
 
