@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Created by http://cafe.naver.com/citrineframework
+    You can freely copy, distribute, modify for commercial or non-commercial purposes.
+-->
+<MOML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.applusform.com/xsd/moml_ui.xsd" version="1.1.1">
+    
+
+    <UILAYOUT portrait="720,1096" landscape="720,1096" >
+        <WINDOW layout="0,0,720,1096" defaultImg="#ffffff">
+	        <WINDOW layout="0,0,720,200" align="linear:center" defaultImg="#ffffff">
+	            <WINDOW layout="443,96" defaultImg="res/logo.png"/>
+	        </WINDOW>
+	
+	        
+		    <WINDOW id="emailWindow" layout="0,150,720,130" align="relative">
+			   <WINDOW layout="0,0,720,120" align="relative" >
+			      <IMAGE layout="60,75,40,30" defaultImg="res/mail.png"/>
+			      <EDIT layout="100,50,550,80"  placeholder="   Email" returnKeyType="next" 
+			       	 fontSize="40" fontColor="#555555" fontStyle="bold" textAlign="vCenter" defaultImg="res/searchBar.png"/>
+			     </WINDOW>
+		     </WINDOW>  
+			  
+		    <WINDOW id="passwdWindow" layout="0,284,720,130" align="relative">
+			   <WINDOW layout="0,0,720,120" align="relative" >
+			      <IMAGE layout="60,75,40,30" defaultImg="res/lock.png"/>
+			      <EDIT layout="100,50,550,80"  placeholder="   Password" returnKeyType="done" textFormat="password"
+			       	  fontSize="40" fontColor="#555555" fontStyle="bold" textAlign="vCenter" defaultImg="res/searchBar.png"/>
+			     </WINDOW>
+		     </WINDOW>  
+		     	        
+	
+	        <STYLEBUTTON layout="50,480,620,120"  text="Sign In" fontSize="45" fontColor="#ffffff" defaultImg="#b7cff8" pressedImg="#4e8ef7" borderStyle="solid:2|#aa4e8ef7" shape="roundRect(20)"/>
+	        <LABEL layout="50,600,380,100"  text="Don't have an account?" fontSize="30" fontColor="#565656" defaultImg="#FFFFFF" textAlign="center"/>
+	        <BUTTON layout="420,600,250,100"  text="Load app here >" fontSize="30" fontColor="#4e8ef7" pressedTextColor="#565656" defaultImg="#FFFFFF" textAlign="center"/>
+        </WINDOW>
+        
+    </UILAYOUT>
+
+</MOML>
