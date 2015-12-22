@@ -7,4 +7,5 @@
     <string name="section_format">Hello World from section: %1$s</string>
     <string name="title_activity_map_google">Map</string>
     <string name="google_maps_key">AIzaSyAtPiCguQEr0D-QTcob8IEmIhJBwqzyzvs</string>
+    <string name="title_activity_camera">CameraActivity</string>
 </resources>

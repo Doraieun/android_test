@@ -27,6 +27,7 @@ public class SubActivity extends AppCompatActivity {
         Button btnMapNaver = (Button)findViewById(R.id.button2);
         Button btnMapGoogle = (Button)findViewById(R.id.button4);
         Button btnTab = (Button)findViewById(R.id.button3);
+        Button btnCamera = (Button) findViewById(R.id.button6);
 
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,6 +57,13 @@ public class SubActivity extends AppCompatActivity {
             public void onClick(View v) {
                 startActivity(new Intent(SubActivity.this, TabActivity.class));
                 //finish();
+            }
+        });
+
+        btnCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(SubActivity.this, CameraActivity.class));
             }
         });
     }

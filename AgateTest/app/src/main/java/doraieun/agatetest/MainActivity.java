@@ -27,7 +27,8 @@ public class MainActivity extends MOMLFragmentActivity {
 //            }
 //        });
 
-        loadApplication("moml/applicationInfo.xml");
+        //loadApplication("moml/applicationInfo.xml");
+        loadApplication("modoo/applicationInfo.xml");
     }
 
 }
