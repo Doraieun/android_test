@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MOML>
+	<APPLICATIONINFO>
+		<START url="webview.xml" />
+		<ORIENTATION type="defaultPortrait" />
+	</APPLICATIONINFO>
+</MOML>
+
