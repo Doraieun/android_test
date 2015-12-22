@@ -195,8 +195,6 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
 
             }
         });
-
-
     }
 
     LocationListener locationListenerNetwork = new LocationListener() {
