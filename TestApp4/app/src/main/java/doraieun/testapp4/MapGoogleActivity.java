@@ -433,5 +433,7 @@ public class MapGoogleActivity extends FragmentActivity implements OnMapReadyCal
         }
     }
 
+
+    //Test Commit in Github.com
 }
 
